@@ -6,82 +6,69 @@ open Types
 
 (* File Header: panel.eliom
    @structures: control_panel_ui
-   @functions: make_slider, make_int_slider, make_btn, make_btn_dyn, build_panel, update_hud, show_gameover *)
+   @functions: make_num_input, make_int_input, make_btn, make_btn_dyn, build_panel, update_hud, show_gameover *)
 
-(* ** make_slider **
-   Constructs a real-time floating point range slider with reactive value label and optional callback.
+(* ** make_num_input **
+   Constructs a labeled number input updating a float reference on each edit.
    @param on_change: optional callback invoked immediately on value change
    @param label_text: display name of parameter
-   @param min_val: minimum slider value
-   @param max_val: maximum slider value
-   @param step_val: adjustment increment
+   @param min_val: minimum accepted value
+   @param max_val: maximum accepted value
+   @param step_val: increment used by the input's arrows
    @param target_ref: mutable float reference to update
-   @res 1: TyXML div element containing slider group
-   @edge cases: uses Lwt_js_events.inputs for instant zero-delay updates
+   @res 1: TyXML div element containing the labeled input
+   @edge cases: typed values are clamped to [min_val, max_val]
    @error conditions: handles string parsing exceptions safely *)
-let make_slider
+let make_num_input
     ?on_change
     (label_text : string)
     (min_val : float)
     (max_val : float)
     (step_val : float)
     (target_ref : float ref) : [> Html_types.div ] elt =
-  let val_span : [> Html_types.span ] elt =
-    span ~a:[a_class ["slider-val"]] [txt (Printf.sprintf "%.2f" !target_ref)]
-  in
-  let range_input : [> Html_types.input ] elt =
+  let num_input : [> Html_types.input ] elt =
     input
       ~a:[
-        a_input_type `Range;
-        a_value (Printf.sprintf "%.3f" !target_ref);
-        Unsafe.string_attrib "min" (Printf.sprintf "%.3f" min_val);
-        Unsafe.string_attrib "max" (Printf.sprintf "%.3f" max_val);
-        Unsafe.string_attrib "step" (Printf.sprintf "%.3f" step_val);
+        a_input_type `Number;
+        a_value (Printf.sprintf "%g" !target_ref);
+        Unsafe.string_attrib "min" (Printf.sprintf "%g" min_val);
+        Unsafe.string_attrib "max" (Printf.sprintf "%g" max_val);
+        Unsafe.string_attrib "step" (Printf.sprintf "%g" step_val);
       ]
       ()
   in
-  let dom_input : Dom_html.inputElement Js.t = Eliom_content.Html.To_dom.of_input range_input in
-  let dom_span : Dom_html.element Js.t = Eliom_content.Html.To_dom.of_element val_span in
+  let dom_input : Dom_html.inputElement Js.t = Eliom_content.Html.To_dom.of_input num_input in
   Lwt.async (fun () ->
     Lwt_js_events.inputs dom_input (fun _ _ ->
-      let v_str : string = Js.to_string dom_input##.value in
       (try
-         let v : float = float_of_string v_str in
+         let v : float = float_of_string (Js.to_string dom_input##.value) in
+         let v : float = Float.max min_val (Float.min max_val v) in
          target_ref := v;
-         (match on_change with Some fn -> fn v | None -> ());
-         dom_span##.textContent := Js.some (Js.string (Printf.sprintf "%.2f" v))
+         (match on_change with Some fn -> fn v | None -> ())
        with _ -> ());
       Lwt.return_unit));
   div
-    ~a:[a_class ["slider-group"]]
-    [
-      div
-        ~a:[a_class ["slider-header"]]
-        [span ~a:[a_class ["slider-label"]] [txt label_text]; val_span];
-      range_input;
-    ]
+    ~a:[a_class ["field-row"]]
+    [label [txt label_text]; num_input]
 
-(* ** make_int_slider **
-   Constructs an integer range slider updating a target integer reference.
+(* ** make_int_input **
+   Constructs a labeled integer number input updating an int reference.
    @param label_text: parameter label
    @param min_val: integer minimum
    @param max_val: integer maximum
    @param target_ref: integer mutable reference
    @res 1: TyXML div element
-   @edge cases: parses integer string input
+   @edge cases: typed values are clamped to [min_val, max_val]
    @error conditions: catches int_of_string exceptions *)
-let make_int_slider
+let make_int_input
     (label_text : string)
     (min_val : int)
     (max_val : int)
     (target_ref : int ref) : [> Html_types.div ] elt =
-  let val_span : [> Html_types.span ] elt =
-    span ~a:[a_class ["slider-val"]] [txt (string_of_int !target_ref)]
-  in
-  let range_input : [> Html_types.input ] elt =
+  let num_input : [> Html_types.input ] elt =
     input
       ~a:[
-        a_input_type `Range;
+        a_input_type `Number;
         a_value (string_of_int !target_ref);
         Unsafe.string_attrib "min" (string_of_int min_val);
         Unsafe.string_attrib "max" (string_of_int max_val);
@@ -89,25 +76,18 @@ let make_int_slider
       ]
       ()
   in
-  let dom_input : Dom_html.inputElement Js.t = Eliom_content.Html.To_dom.of_input range_input in
-  let dom_span : Dom_html.element Js.t = Eliom_content.Html.To_dom.of_element val_span in
+  let dom_input : Dom_html.inputElement Js.t = Eliom_content.Html.To_dom.of_input num_input in
   Lwt.async (fun () ->
     Lwt_js_events.inputs dom_input (fun _ _ ->
-      let v_str : string = Js.to_string dom_input##.value in
       (try
-         let v : int = int_of_string v_str in
-         target_ref := v;
-         dom_span##.textContent := Js.some (Js.string (string_of_int v))
+         let v : int = int_of_string (Js.to_string dom_input##.value) in
+         let v : int = max min_val (min max_val v) in
+         target_ref := v
        with _ -> ());
       Lwt.return_unit));
   div
-    ~a:[a_class ["slider-group"]]
-    [
-      div
-        ~a:[a_class ["slider-header"]]
-        [span ~a:[a_class ["slider-label"]] [txt label_text]; val_span];
-      range_input;
-    ]
+    ~a:[a_class ["field-row"]]
+    [label [txt label_text]; num_input]
 
 (* ** make_btn **
    Constructs a static button with Lwt_js_events click binding.
@@ -288,25 +268,25 @@ let build_panel () : unit =
           ]
       in
 
-      (* 2. Sliders Section *)
-      let slider_speed = make_slider "Movement Speed (px/s)" 30.0 250.0 5.0 Config.speed_base in
-      let slider_contam = make_slider "Contamination Chance" 0.005 0.10 0.005 Config.contam_prob in
-      let slider_spawn = make_slider "Spawn Interval (s)" 1.0 10.0 0.5 Config.spawn_interval in
-      let slider_init = make_int_slider "Initial Creets" 2 30 Config.initial_creets in
-      let slider_berserk = make_slider "Berserk Chance (10s)" 0.0 0.50 0.05 Config.berserk_prob in
-      let slider_mean = make_slider "Mean Chance (10s)" 0.0 0.50 0.05 Config.mean_prob in
+      (* 2. Parameter Inputs Section *)
+      let in_speed = make_num_input "Movement Speed (px/s)" 30.0 250.0 5.0 Config.speed_base in
+      let in_contam = make_num_input "Contamination Chance" 0.005 0.10 0.005 Config.contam_prob in
+      let in_spawn = make_num_input "Spawn Interval (s)" 1.0 10.0 0.5 Config.spawn_interval in
+      let in_init = make_int_input "Initial Creets" 2 30 Config.initial_creets in
+      let in_berserk = make_num_input "Berserk Chance (10s)" 0.0 0.50 0.05 Config.berserk_prob in
+      let in_mean = make_num_input "Mean Chance (10s)" 0.0 0.50 0.05 Config.mean_prob in
 
-      let sliders_section =
+      let params_section =
         div
           [
             h3 ~a:[a_class ["panel-section-title"]] [txt "Simulation Parameters (Live)"];
-            div ~a:[a_style "display:flex; flex-direction:column; gap:10px;"] [
-              slider_speed;
-              slider_contam;
-              slider_spawn;
-              slider_init;
-              slider_berserk;
-              slider_mean;
+            div ~a:[a_style "display:flex; flex-direction:column; gap:6px;"] [
+              in_speed;
+              in_contam;
+              in_spawn;
+              in_init;
+              in_berserk;
+              in_mean;
             ];
           ]
       in
@@ -337,11 +317,11 @@ let build_panel () : unit =
           let sound_on = Audio.toggle_mute () in
           btn##.textContent := Js.some (Js.string (if sound_on then "Sound: ON" else "Sound: MUTED")))
       in
-      let slider_music_vol =
-        make_slider ~on_change:Audio.set_music_volume "Music Volume" 0.0 1.0 0.05 Audio.music_volume
+      let in_music_vol =
+        make_num_input ~on_change:Audio.set_music_volume "Music Volume" 0.0 1.0 0.05 Audio.music_volume
       in
-      let slider_sfx_vol =
-        make_slider ~on_change:Audio.set_sfx_volume "SFX Volume" 0.0 1.0 0.05 Audio.sfx_volume
+      let in_sfx_vol =
+        make_num_input ~on_change:Audio.set_sfx_volume "SFX Volume" 0.0 1.0 0.05 Audio.sfx_volume
       in
 
       (* 6. Bonus 4: Statistics Dashboard Drawer *)
@@ -368,12 +348,12 @@ let build_panel () : unit =
             div ~a:[a_class ["btn-grid"]] [toggle_grid_btn; stress_btn];
             h3 ~a:[a_class ["panel-section-title"]; a_style "margin-top:10px;"] [txt "Audio Controls"];
             div ~a:[a_class ["btn-grid"]] [mute_btn];
-            div ~a:[a_style "margin-top:8px; display:flex; flex-direction:column; gap:8px;"] [slider_music_vol; slider_sfx_vol];
+            div ~a:[a_style "margin-top:8px; display:flex; flex-direction:column; gap:6px;"] [in_music_vol; in_sfx_vol];
             dash_div;
           ]
       in
 
-      let full_panel = div [hud_section; sliders_section; actions_section] in
+      let full_panel = div [hud_section; params_section; actions_section] in
       panel_node##.innerHTML := Js.string "";
       Eliom_content.Html.Manip.appendChild (Eliom_content.Html.Of_dom.of_element panel_node) full_panel;
 
