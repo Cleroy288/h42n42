@@ -53,23 +53,54 @@ module Main = struct
     Types.dom_nodes.panel_el <- get_elem "panel";
     Types.dom_nodes.gameover_el <- get_elem "gameover";
 
-    (* Step 2: Responsive board scaling *)
-    (match Types.dom_nodes.board_el with
-    | None -> ()
-    | Some dom_board ->
+    (* Step 2: Responsive board scaling.
+       The wrapper is resized along with the scaled board so the layout
+       stays centered without dead space. Below 1400px the panel stacks
+       under the board (see CSS media query), so the board can use the
+       full window width. *)
+    (match Types.dom_nodes.board_el, get_elem "board-wrapper" with
+    | Some dom_board, Some dom_wrapper ->
         let update_scale () : unit =
           let win_w : float = float_of_int Dom_html.window##.innerWidth in
           let s : float =
-            if win_w < 1440.0 then
-              max 0.5 (min 1.0 ((win_w -. 440.0) /. 1000.0))
-            else 1.0
+            if win_w >= 1400.0 then 1.0
+            else max 0.5 (min 1.0 ((win_w -. 40.0) /. Config.board_w))
           in
-          dom_board##.style##.transform := Js.string (Printf.sprintf "scale(%.3f)" s)
+          dom_board##.style##.transform := Js.string (Printf.sprintf "scale(%.3f)" s);
+          dom_wrapper##.style##.width := Js.string (Printf.sprintf "%.0fpx" (Config.board_w *. s));
+          dom_wrapper##.style##.height := Js.string (Printf.sprintf "%.0fpx" (Config.board_h *. s))
         in
         update_scale ();
         Lwt.async (fun () ->
           Lwt_js_events.onresizes (fun _ _ ->
             update_scale ();
+            Lwt.return_unit))
+    | _ -> ());
+
+    (* Step 2b: Light/dark mode toggle (persisted in localStorage) *)
+    (match get_elem "theme-toggle" with
+    | None -> ()
+    | Some btn ->
+        let body = Dom_html.document##.body in
+        let set_dark (dark : bool) : unit =
+          (if dark then body##.classList##add (Js.string "dark")
+           else body##.classList##remove (Js.string "dark"));
+          btn##.textContent := Js.some (Js.string (if dark then "Light Mode" else "Dark Mode"));
+          Js.Optdef.iter Dom_html.window##.localStorage (fun st ->
+            st##setItem (Js.string "h42n42-theme") (Js.string (if dark then "dark" else "light")))
+        in
+        let initial_dark : bool =
+          Js.Optdef.case Dom_html.window##.localStorage
+            (fun () -> false)
+            (fun st ->
+              Js.Opt.case (st##getItem (Js.string "h42n42-theme"))
+                (fun () -> false)
+                (fun v -> Js.to_string v = "dark"))
+        in
+        set_dark initial_dark;
+        Lwt.async (fun () ->
+          Lwt_js_events.clicks btn (fun _ _ ->
+            set_dark (not (Js.to_bool (body##.classList##contains (Js.string "dark"))));
             Lwt.return_unit)));
 
     (* Step 3: Audio preloading and autoplay unlocking gesture *)
@@ -111,6 +142,9 @@ let header_elt =
               div ~a:[a_class ["app-subtitle"]] [txt "Ocsigen / Eliom / Lwt Client-Side Simulation"];
             ];
         ];
+      button
+        ~a:[a_id "theme-toggle"; a_class ["btn"]; a_button_type `Button]
+        [txt "Dark Mode"];
     ]
 
 let page_content = body [header_elt; game_container]

@@ -22,11 +22,14 @@ body {
   user-select: none;
 }
 
-/* Header */
+/* Header: logo on the left, theme toggle on the right */
 
 .app-header {
-  padding: 10px;
-  text-align: center;
+  width: 100%;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .logo-badge {
@@ -357,6 +360,56 @@ body {
     align-items: center;
   }
   #panel {
-    width: 1000px;
+    width: 100%;
+    max-width: 1000px;
   }
+}
+
+/* Dark mode (toggled by the header button, persisted in localStorage) */
+
+body.dark {
+  background: #15181d;
+  color: #dddddd;
+}
+
+body.dark .app-subtitle { color: #888888; }
+
+body.dark #board-wrapper { border-color: #666666; }
+body.dark #field { background: #1e2228; }
+body.dark #river { background: #2b5c96; border-bottom-color: #1d4470; }
+body.dark #hospital { background: #2f7a44; border-top-color: #235c33; }
+
+body.dark #panel {
+  background: #1a1d22;
+  border-color: #3a3f46;
+}
+
+body.dark .hud-card { border-color: #3a3f46; }
+body.dark .hud-label { color: #999999; }
+
+body.dark .btn {
+  background: #262a30;
+  border-color: #4a4f57;
+  color: #dddddd;
+}
+
+body.dark .btn:hover { background: #31363d; }
+body.dark .btn-primary { background: #1e3a5f; }
+body.dark .btn-danger { background: #5c2626; }
+
+body.dark .field-row input {
+  background: #262a30;
+  border-color: #4a4f57;
+  color: #dddddd;
+}
+
+body.dark #dashboard { border-color: #3a3f46; }
+
+body.dark .leaderboard-table th,
+body.dark .leaderboard-table td { border-color: #3a3f46; }
+
+body.dark .gameover-container {
+  background: #1a1d22;
+  border-color: #666666;
+  color: #dddddd;
 }
