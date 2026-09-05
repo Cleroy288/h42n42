@@ -1,0 +1,16 @@
+_build/
+local/
+*.exe
+*.cma
+*.cmi
+*.cmo
+*.cmx
+*.cmxs
+*.o
+*.a
+*.annot
+*.opt
+*.bc
+*.bc.js
+.merlin
+.DS_Store

@@ -1,0 +1,54 @@
+(dirs tools client gen)
+
+(library
+ (name h42n42)
+ (libraries eliom.server ocsipersist-sqlite ocsipersist-sqlite.settings)
+ (library_flags
+  (:standard -linkall))
+ (wrapped false)
+ (preprocess
+  (pps
+   lwt_ppx
+   js_of_ocaml-ppx_deriving_json
+   ocsigen-ppx-rpc
+   eliom.ppx.server
+   --)))
+
+(subdir
+ gen
+ (rule
+  (deps ../tools/gen_dune.ml)
+  (action
+   (with-stdout-to
+    dune.client
+    (run ocaml ../tools/gen_dune.ml)))))
+
+(subdir
+ client
+ (executables
+  (names h42n42)
+  (modes js byte)
+  (preprocess
+   (pps js_of_ocaml-ppx lwt_ppx))
+  (js_of_ocaml
+   (build_runtime_flags :standard --enable use-js-string)
+   (flags
+    :standard
+    --enable
+    with-js-error
+    --enable
+    use-js-string
+    --no-source-map))
+  (libraries eliom.client))
+ (dynamic_include ../gen/dune.client))
+
+; Main rule:
+(rule
+ (alias h42n42)
+ (deps
+  h42n42.cma
+  client/h42n42.bc
+  client/h42n42.bc.js
+  tools/check_modules.ml)
+ (action
+  (run ocaml -I +unix -I +str tools/check_modules.ml h42n42)))

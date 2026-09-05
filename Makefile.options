@@ -1,0 +1,39 @@
+#----------------------------------------------------------------------
+#           SETTINGS FOR THE ELIOM PROJECT h42n42
+#----------------------------------------------------------------------
+
+PROJECT_NAME          := h42n42
+
+# Port for running the server (make run)
+PORT                  := 8080
+
+# Port for testing
+TEST_PORT             := 8080
+
+# Local folder for runtime data (must end with /)
+TEST_PREFIX           := local/
+
+# Configuration file directory
+ETCDIR                := etc/${PROJECT_NAME}
+
+# Project's library directory
+LIBDIR                := lib/${PROJECT_NAME}
+
+# Command pipe
+CMDPIPE               := var/run/${PROJECT_NAME}-cmd
+
+# Ocsigenserver's logging files
+LOGDIR                := var/log/${PROJECT_NAME}
+
+# Ocsigenserver's persistent data files
+DATADIR               := var/data/${PROJECT_NAME}
+
+# Project's static files directory
+FILESDIR              := var/www/${PROJECT_NAME}
+
+# Project's JavaScript file directory
+ELIOMSTATICDIR        := var/www/${PROJECT_NAME}
+
+LOCAL_STATIC          := static
+
+DEBUG                 := yes

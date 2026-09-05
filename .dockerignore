@@ -1,0 +1,8 @@
+_build
+local
+.git
+.gitignore
+.dockerignore
+*.md
+*.pdf
+scratch
