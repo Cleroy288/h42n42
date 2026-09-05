@@ -46,6 +46,7 @@ config-files: config-dirs
 	     -e 's|%%DEBUGMODE%%|<debugmode/>|g' \
 	     -e 's|%%CMDPIPE%%|$(TEST_PREFIX)$(CMDPIPE)|g' \
 	     -e 's|%%STATICDIR%%|$(LOCAL_STATIC)|g' \
+	     -e 's|%%STATICCACHE%%|$(STATIC_CACHE)|g' \
 	     -e 's|%%ELIOMSTATICDIR%%|$(TEST_PREFIX)$(ELIOMSTATICDIR)|g' \
 	     -e 's|%%LIBDIR%%|$(TEST_PREFIX)$(LIBDIR)|g' \
 	     -e 's|%%PROJECT_NAME%%|$(PROJECT_NAME)|g' \

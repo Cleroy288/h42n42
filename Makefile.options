@@ -36,4 +36,9 @@ ELIOMSTATICDIR        := var/www/${PROJECT_NAME}
 
 LOCAL_STATIC          := static
 
+# Cache-Control max-age (seconds) for static files.
+# 0 = send "Cache-Control: no-cache" so browsers always revalidate
+# (dev-friendly: CSS/JS changes show up on a simple page refresh).
+STATIC_CACHE          := 0
+
 DEBUG                 := yes

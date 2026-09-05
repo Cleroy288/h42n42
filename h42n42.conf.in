@@ -12,8 +12,8 @@
       <ignoredgetparams regexp="utm_[a-z]*|[a-z]*clid|li_fat_id"/>
     </extension>
     <host defaulthostname="localhost" hostfilter="*">
-      <static dir="%%STATICDIR%%" />
-      <static dir="%%ELIOMSTATICDIR%%" />
+      <static dir="%%STATICDIR%%" cache="%%STATICCACHE%%" />
+      <static dir="%%ELIOMSTATICDIR%%" cache="%%STATICCACHE%%" />
       <eliommodule module="%%LIBDIR%%/%%PROJECT_NAME%%.cma" />
       <eliom/>
     </host>

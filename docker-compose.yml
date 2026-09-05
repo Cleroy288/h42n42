@@ -4,3 +4,7 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+    volumes:
+      # Live-mount static assets (css/img/audio): edits are served
+      # immediately without rebuilding the Docker image.
+      - ./static:/home/opam/h42n42/static:ro
