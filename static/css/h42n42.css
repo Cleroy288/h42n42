@@ -138,9 +138,13 @@ header.app-header {
   left: 0;
   width: 1000px;
   height: 80px;
-  background: linear-gradient(180deg, rgba(30, 58, 138, 0.55) 0%, rgba(2, 132, 199, 0.55) 70%, rgba(3, 105, 161, 0.55) 100%);
+  background:
+    linear-gradient(180deg, rgba(147, 197, 253, 0.22) 0%, rgba(147, 197, 253, 0.0) 35%),
+    linear-gradient(180deg, rgba(30, 64, 175, 0.6) 0%, rgba(2, 132, 199, 0.55) 55%, rgba(3, 105, 161, 0.65) 100%);
   border-bottom: 2px solid #38bdf8;
-  box-shadow: inset 0 -4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 -6px 14px rgba(2, 20, 40, 0.45),
+    inset 0 10px 14px rgba(147, 197, 253, 0.10);
   overflow: hidden;
   z-index: 2;
   display: flex;
@@ -148,6 +152,8 @@ header.app-header {
   justify-content: center;
 }
 
+/* Water surface: two parallax wave crests (inline SVG) drifting in
+   opposite directions + subtle sparkle glints, all in one layer. */
 #river::before {
   content: '';
   position: absolute;
@@ -155,9 +161,14 @@ header.app-header {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
-  background-size: 24px 24px;
-  animation: riverFlow 8s linear infinite;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='80' viewBox='0 0 160 80'%3E%3Cpath d='M0 20 q20 -12 40 0 q20 12 40 0 q20 -12 40 0 q20 12 40 0' fill='none' stroke='rgba(186,230,253,0.40)' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M0 62 q20 -9 40 0 q20 9 40 0 q20 -9 40 0 q20 9 40 0' fill='none' stroke='rgba(125,211,252,0.22)' stroke-width='2'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='80' viewBox='0 0 90 80'%3E%3Cpath d='M0 42 q11.25 -7 22.5 0 q11.25 7 22.5 0 q11.25 -7 22.5 0 q11.25 7 22.5 0' fill='none' stroke='rgba(224,242,254,0.28)' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E"),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.14) 1px, transparent 1.5px);
+  background-size: 160px 80px, 90px 80px, 26px 26px;
+  background-repeat: repeat-x, repeat-x, repeat;
+  background-position: 0 0, 0 0, 0 0;
+  animation: riverFlow 10s linear infinite;
   pointer-events: none;
 }
 
@@ -171,9 +182,12 @@ header.app-header {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* Each layer shifts by an exact multiple of its own tile width so the
+   loop is seamless: big waves drift right, small crests drift left,
+   glints drift right slowly. */
 @keyframes riverFlow {
-  0% { background-position: 0 0; }
-  100% { background-position: 240px 0; }
+  0% { background-position: 0 0, 0 0, 0 0; }
+  100% { background-position: 320px 0, -180px 0, 130px 0; }
 }
 
 #field {
