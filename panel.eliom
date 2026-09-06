@@ -360,19 +360,26 @@ let build_panel () : unit =
         make_num_input ~on_change:Audio.set_sfx_volume "SFX Volume" 0.0 1.0 0.05 Audio.sfx_volume
       in
 
-      (* 6. Bonus 4: Statistics Dashboard Drawer *)
+      (* 6. Bonus 4: Statistics Dashboard Drawer.
+         Rendered every HUD tick while visible so metrics evolve live. *)
       let dash_div = div ~a:[a_id "dashboard"; a_class ["hidden"]] [] in
       let dom_dash : Dom_html.element Js.t = Eliom_content.Html.To_dom.of_element dash_div in
+      let render_dashboard () : unit =
+        let eff : int = int_of_float (Stats.calculate_efficiency () *. 100.0) in
+        let sc : int = Stats.calculate_score () in
+        dom_dash##.innerHTML :=
+          Js.string
+            (Printf.sprintf
+               "<strong>DETAILED METRICS</strong><br/>Score: %d | Efficiency: %d%%<br/>Lost to Virus: %d<br/>Berserk Seen: %d | Mean Seen: %d"
+               sc eff Stats.session_stats.lost Stats.session_stats.berserk_seen Stats.session_stats.mean_seen)
+      in
+      let dashboard_visible () : bool =
+        not (Js.to_bool (dom_dash##.classList##contains (Js.string "hidden")))
+      in
       let dash_toggle_btn =
         make_btn "Toggle Dashboard" [] (fun () ->
           dom_dash##.classList##toggle (Js.string "hidden") |> ignore;
-          let eff : int = int_of_float (Stats.calculate_efficiency () *. 100.0) in
-          let sc : int = Stats.calculate_score () in
-          dom_dash##.innerHTML :=
-            Js.string
-              (Printf.sprintf
-                 "<strong>DETAILED METRICS</strong><br/>Score: %d | Efficiency: %d%%<br/>Lost to Virus: %d<br/>Berserk Seen: %d | Mean Seen: %d"
-                 sc eff Stats.session_stats.lost Stats.session_stats.berserk_seen Stats.session_stats.mean_seen))
+          if dashboard_visible () then render_dashboard ())
       in
 
       let actions_section =
@@ -393,11 +400,13 @@ let build_panel () : unit =
       panel_node##.innerHTML := Js.string "";
       Eliom_content.Html.Manip.appendChild (Eliom_content.Html.Of_dom.of_element panel_node) full_panel;
 
-      (* Launch periodic HUD update thread *)
+      (* Launch periodic HUD update thread (also refreshes the detailed
+         metrics dashboard while it is visible) *)
       Lwt.async (fun () ->
         let rec hud_loop () : unit Lwt.t =
           let%lwt () = Lwt_js.sleep 0.25 in
           update_hud ();
+          if dashboard_visible () then render_dashboard ();
           hud_loop ()
         in
         hud_loop ())
