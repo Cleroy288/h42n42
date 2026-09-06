@@ -271,6 +271,16 @@ body {
 .btn-primary { background: #dbeafe; }
 .btn-danger  { background: #fee2e2; }
 
+/* Selected difficulty mode */
+.btn.active {
+  background: #2b6cb0;
+  border-color: #2b6cb0;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.btn.active:hover { background: #2b6cb0; }
+
 /* Dashboard drawer (Bonus) */
 
 #dashboard {
@@ -396,6 +406,14 @@ body.dark .btn {
 body.dark .btn:hover { background: #31363d; }
 body.dark .btn-primary { background: #1e3a5f; }
 body.dark .btn-danger { background: #5c2626; }
+
+body.dark .btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+body.dark .btn.active:hover { background: #3b82f6; }
 
 body.dark .field-row input {
   background: #262a30;

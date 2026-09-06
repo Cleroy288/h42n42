@@ -6,7 +6,15 @@ open Types
 
 (* File Header: panel.eliom
    @structures: control_panel_ui
-   @functions: make_num_input, make_int_input, make_btn, make_btn_dyn, build_panel, update_hud, show_gameover *)
+   @functions: make_num_input, make_int_input, refresh_inputs, make_btn, make_btn_dyn, build_panel, update_hud, show_gameover *)
+
+(* Registry of sync functions: each parameter input registers a closure
+   re-reading its target ref, so presets (difficulty buttons) can refresh
+   the displayed values after changing the refs. *)
+let input_refreshers : (unit -> unit) list ref = ref []
+
+let refresh_inputs () : unit =
+  List.iter (fun f -> f ()) !input_refreshers
 
 (* ** make_num_input **
    Constructs a labeled number input updating a float reference on each edit.
@@ -38,6 +46,9 @@ let make_num_input
       ()
   in
   let dom_input : Dom_html.inputElement Js.t = Eliom_content.Html.To_dom.of_input num_input in
+  input_refreshers :=
+    (fun () -> dom_input##.value := Js.string (Printf.sprintf "%g" !target_ref))
+    :: !input_refreshers;
   Lwt.async (fun () ->
     Lwt_js_events.inputs dom_input (fun _ _ ->
       (try
@@ -77,6 +88,9 @@ let make_int_input
       ()
   in
   let dom_input : Dom_html.inputElement Js.t = Eliom_content.Html.To_dom.of_input num_input in
+  input_refreshers :=
+    (fun () -> dom_input##.value := Js.string (string_of_int !target_ref))
+    :: !input_refreshers;
   Lwt.async (fun () ->
     Lwt_js_events.inputs dom_input (fun _ _ ->
       (try
@@ -298,9 +312,31 @@ let build_panel () : unit =
           btn##.textContent := Js.some (Js.string (if is_paused then "Resume" else "Pause")))
       in
       let reset_btn = make_btn "Reset Game" ["btn-danger"] (fun () -> Game.reset_game ()) in
-      let btn_easy = make_btn "Mode: Easy" [] (fun () -> Config.set_difficulty Config.Easy) in
-      let btn_norm = make_btn "Mode: Normal" [] (fun () -> Config.set_difficulty Config.Normal) in
-      let btn_hard = make_btn "Mode: Hard" [] (fun () -> Config.set_difficulty Config.Hard) in
+
+      (* Difficulty presets: apply values, sync inputs, highlight the
+         active mode button (Normal is highlighted from the start). *)
+      let update_mode_buttons : (unit -> unit) ref = ref (fun () -> ()) in
+      let select_mode (m : Config.difficulty_mode) : unit =
+        Config.set_difficulty m;
+        refresh_inputs ();
+        !update_mode_buttons ()
+      in
+      let btn_easy = make_btn "Mode: Easy" [] (fun () -> select_mode Config.Easy) in
+      let btn_norm = make_btn "Mode: Normal" [] (fun () -> select_mode Config.Normal) in
+      let btn_hard = make_btn "Mode: Hard" [] (fun () -> select_mode Config.Hard) in
+      let dom_easy = Eliom_content.Html.To_dom.of_button btn_easy in
+      let dom_norm = Eliom_content.Html.To_dom.of_button btn_norm in
+      let dom_hard = Eliom_content.Html.To_dom.of_button btn_hard in
+      (update_mode_buttons :=
+         fun () ->
+           let mark dom_btn active =
+             if active then dom_btn##.classList##add (Js.string "active")
+             else dom_btn##.classList##remove (Js.string "active")
+           in
+           mark dom_easy (!Config.current_difficulty = Config.Easy);
+           mark dom_norm (!Config.current_difficulty = Config.Normal);
+           mark dom_hard (!Config.current_difficulty = Config.Hard));
+      !update_mode_buttons ();
 
       (* 4. Bonus 5: Collisions & Stress *)
       let toggle_grid_btn =

@@ -40,19 +40,41 @@ type difficulty_mode = Easy | Normal | Hard
 let current_difficulty : difficulty_mode ref = ref Normal
 
 (* ** set_difficulty **
-   Updates active difficulty preset and adjusts acceleration rate.
+   Applies a full parameter preset for the selected difficulty.
+   Easy = slow creets, rare contamination/mutations, sparse spawns.
+   Normal = baseline values. Hard = everything at maximum.
    @param mode: selected difficulty preset
    @res 1: unit indicating state update completion
-   @edge cases: applies immediately to next difficulty tick
+   @edge cases: speed/contamination apply immediately; initial_creets
+   takes effect on the next reset
    @error conditions: none *)
 let set_difficulty (mode : difficulty_mode) : unit =
-  (* Step 1: Assign current difficulty mode *)
   current_difficulty := mode;
-  (* Step 2: Set speed acceleration step according to mode *)
-  (match mode with
-  | Easy -> accel_step := 0.04
-  | Normal -> accel_step := 0.08
-  | Hard -> accel_step := 0.15)
+  match mode with
+  | Easy ->
+      speed_base := 50.0;
+      contam_prob := 0.005;
+      spawn_interval := 6.0;
+      initial_creets := 6;
+      berserk_prob := 0.05;
+      mean_prob := 0.05;
+      accel_step := 0.04
+  | Normal ->
+      speed_base := 90.0;
+      contam_prob := 0.02;
+      spawn_interval := 4.0;
+      initial_creets := 8;
+      berserk_prob := 0.10;
+      mean_prob := 0.10;
+      accel_step := 0.08
+  | Hard ->
+      speed_base := 250.0;
+      contam_prob := 0.10;
+      spawn_interval := 1.0;
+      initial_creets := 20;
+      berserk_prob := 0.50;
+      mean_prob := 0.50;
+      accel_step := 0.15
 
 (* ** reset_defaults **
    Restores all game configuration parameters to baseline values.
@@ -60,16 +82,7 @@ let set_difficulty (mode : difficulty_mode) : unit =
    @edge cases: called when game is reset
    @error conditions: none *)
 let reset_defaults () : unit =
-  (* Step 1: Reset speed multipliers and probabilities *)
-  speed_base := 90.0;
+  set_difficulty Normal;
   speed_mult := 1.0;
-  contam_prob := 0.02;
-  spawn_interval := 4.0;
-  initial_creets := 8;
-  berserk_prob := 0.10;
-  mean_prob := 0.10;
-  accel_step := 0.08;
-  (* Step 2: Unpause game and set standard difficulty *)
-  paused := false;
-  current_difficulty := Normal
+  paused := false
 ]
