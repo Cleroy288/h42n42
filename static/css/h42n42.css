@@ -1,8 +1,6 @@
 /* ==========================================================================
    H42N42 — minimal stylesheet
-   Blue river on top, neutral field, green hospital at the bottom,
-   plain control panel with number inputs. No decoration beyond what is
-   needed to see the game working.
+   Blue river on top, neutral field, green hospital at the bottom.
    ========================================================================== */
 
 * {
@@ -22,66 +20,20 @@ body {
   user-select: none;
 }
 
-/* Header: logo on the left, theme toggle on the right */
-
-.app-header {
-  width: 100%;
-  padding: 10px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo-badge {
-  font-weight: bold;
-  margin-right: 8px;
-}
-
-.logo-container {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 8px;
-}
-
 .app-title {
-  font-weight: bold;
+  margin: 12px 0;
+  font-size: 20px;
 }
 
-.app-subtitle {
-  color: #777777;
-  font-size: 12px;
-}
+/* Board and zones */
 
-/* Layout */
-
-#game-container {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 16px;
-}
-
-#board-wrapper {
+#board {
   position: relative;
   width: 1000px;
   height: 700px;
-  flex-shrink: 0;
   border: 1px solid #444444;
-  overflow: hidden;
+  margin-bottom: 16px;
 }
-
-#board {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1000px;
-  height: 700px;
-  transform-origin: top left;
-}
-
-/* Zones: blue river / plain field / green hospital */
 
 #river {
   position: absolute;
@@ -169,153 +121,11 @@ body {
   border: 2px solid #222222;
 }
 
-.creet.dying {
-  opacity: 0;
-  transition: opacity 0.4s ease-out;
-}
-
-.flash-heal   { outline: 3px solid #38a169; }
-.flash-mutate { outline: 3px solid #9f7aea; }
-
-/* Contamination particles (Bonus) */
-
-.particle {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #e53e3e;
-  pointer-events: none;
-  z-index: 50;
-  animation: burst 0.55s ease-out forwards;
-}
-
-@keyframes burst {
-  0%   { transform: translate(0, 0); opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
-}
-
-/* Control panel (Bonus) */
-
-#panel {
-  width: 320px;
-  flex-shrink: 0;
-  border: 1px solid #cccccc;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: #ffffff;
-}
-
-.panel-section-title {
-  font-size: 13px;
-  font-weight: bold;
-  margin: 8px 0 4px 0;
-}
-
-/* HUD */
-
-.hud-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-}
-
-.hud-card {
-  display: flex;
-  justify-content: space-between;
-  border: 1px solid #e0e0e0;
-  padding: 3px 6px;
-  font-size: 13px;
-}
-
-.hud-label { color: #666666; }
-.hud-value { font-weight: bold; }
-
-/* Parameter rows: label + number input */
-
-.field-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.field-row input {
-  width: 80px;
-  padding: 2px 4px;
-  border: 1px solid #aaaaaa;
-  font-size: 13px;
-}
-
-/* Buttons */
-
-.btn-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-}
-
-.btn {
-  padding: 5px 8px;
-  border: 1px solid #999999;
-  background: #f0f0f0;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btn:hover { background: #e2e2e2; }
-
-.btn-primary { background: #dbeafe; }
-.btn-danger  { background: #fee2e2; }
-
-/* Selected difficulty mode */
-.btn.active {
-  background: #2b6cb0;
-  border-color: #2b6cb0;
-  color: #ffffff;
-  font-weight: bold;
-}
-
-.btn.active:hover { background: #2b6cb0; }
-
-/* Dashboard drawer (Bonus) */
-
-#dashboard {
-  border: 1px solid #e0e0e0;
-  padding: 6px;
-  font-size: 13px;
-  margin-top: 4px;
-}
-
-.dash-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-}
-
-/* Leaderboard */
-
-.leaderboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.leaderboard-table th,
-.leaderboard-table td {
-  border: 1px solid #dddddd;
-  padding: 3px 6px;
-  text-align: left;
-}
-
 /* Utility */
 
 .hidden { display: none !important; }
 
-/* Game over overlay: full screen, centered white box */
+/* Game over overlay */
 
 #gameover {
   position: fixed;
@@ -330,104 +140,27 @@ body {
   justify-content: center;
 }
 
-.gameover-container {
+.gameover-box {
   background: #ffffff;
   border: 1px solid #444444;
-  padding: 20px;
+  padding: 32px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  min-width: 420px;
+  gap: 16px;
 }
 
-.gameover-title {
-  font-size: 28px;
+.gameover-box h1 {
   color: #c53030;
+  font-size: 32px;
 }
 
-.gameover-stats-box {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
+.btn {
+  padding: 6px 16px;
+  border: 1px solid #999999;
+  background: #f0f0f0;
+  font-size: 14px;
+  cursor: pointer;
 }
 
-.gameover-score-row {
-  display: flex;
-  justify-content: space-between;
-  font-weight: bold;
-  border-bottom: 1px solid #dddddd;
-  padding-bottom: 4px;
-  margin-bottom: 4px;
-}
-
-/* Stack vertically on narrow screens */
-
-@media (max-width: 1400px) {
-  #game-container {
-    flex-direction: column;
-    align-items: center;
-  }
-  #panel {
-    width: 100%;
-    max-width: 1000px;
-  }
-}
-
-/* Dark mode (toggled by the header button, persisted in localStorage) */
-
-body.dark {
-  background: #15181d;
-  color: #dddddd;
-}
-
-body.dark .app-subtitle { color: #888888; }
-
-body.dark #board-wrapper { border-color: #666666; }
-body.dark #field { background: #1e2228; }
-body.dark #river { background: #2b5c96; border-bottom-color: #1d4470; }
-body.dark #hospital { background: #2f7a44; border-top-color: #235c33; }
-
-body.dark #panel {
-  background: #1a1d22;
-  border-color: #3a3f46;
-}
-
-body.dark .hud-card { border-color: #3a3f46; }
-body.dark .hud-label { color: #999999; }
-
-body.dark .btn {
-  background: #262a30;
-  border-color: #4a4f57;
-  color: #dddddd;
-}
-
-body.dark .btn:hover { background: #31363d; }
-body.dark .btn-primary { background: #1e3a5f; }
-body.dark .btn-danger { background: #5c2626; }
-
-body.dark .btn.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: #ffffff;
-}
-
-body.dark .btn.active:hover { background: #3b82f6; }
-
-body.dark .field-row input {
-  background: #262a30;
-  border-color: #4a4f57;
-  color: #dddddd;
-}
-
-body.dark #dashboard { border-color: #3a3f46; }
-
-body.dark .leaderboard-table th,
-body.dark .leaderboard-table td { border-color: #3a3f46; }
-
-body.dark .gameover-container {
-  background: #1a1d22;
-  border-color: #666666;
-  color: #dddddd;
-}
+.btn:hover { background: #e2e2e2; }

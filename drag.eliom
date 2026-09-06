@@ -4,15 +4,11 @@ open Js_of_ocaml_lwt
 open Types
 
 (* File Header: drag.eliom
-   @structures: drag_interaction
-   @functions: get_board_coords, attach_drag, heal_creet, drop_creet *)
+   @functions: get_board_coords, heal_creet, drop_creet, attach_drag *)
 
 (* ** get_board_coords **
-   Translates raw viewport mouse event coordinates into logical board coordinates.
-   @param ev: mouse event containing clientX and clientY
-   @res 1: tuple of (board_x, board_y) normalized coordinates
-   @edge cases: handles CSS scaling transforms using getBoundingClientRect
-   @error conditions: defaults to 1.0 scale if bounding box is unmeasured *)
+   Translates viewport mouse coordinates into logical board coordinates,
+   accounting for any CSS scaling of the board. *)
 let get_board_coords (ev : Dom_html.mouseEvent Js.t) : float * float =
   match dom_nodes.board_el with
   | None -> (float_of_int ev##.clientX, float_of_int ev##.clientY)
@@ -27,11 +23,7 @@ let get_board_coords (ev : Dom_html.mouseEvent Js.t) : float * float =
       (bx, by)
 
 (* ** heal_creet **
-   Restores a sick creature to healthy condition when dropped in hospital.
-   @param c: creature being cured
-   @res 1: unit confirming cure
-   @edge cases: resets diameter to baseline and normalizes velocity
-   @error conditions: none *)
+   Sick creet dropped in the hospital becomes healthy again. *)
 let heal_creet (c : creet) : unit =
   if c.alive && c.state = Sick then begin
     c.state <- Healthy;
@@ -40,37 +32,25 @@ let heal_creet (c : creet) : unit =
     let spd : float = Creet.get_creet_speed c in
     c.vx <- cos current_angle *. spd;
     c.vy <- sin current_angle *. spd;
-    emit_event (Healed c);
     Creet.render_creet c
   end
 
 (* ** drop_creet **
-   Handles creature release, checks for hospital healing, and clamps position.
-   @param c: creature being released
-   @res 1: unit confirming release
-   @edge cases: clamped inside board edges even if released outside window
-   @error conditions: none *)
+   Releases a dragged creet: clamps it inside the board and heals it if
+   its center landed inside the hospital zone. *)
 let drop_creet (c : creet) : unit =
   c.dragging <- false;
-  (* Strict boundary clamping upon release *)
   c.x <- max 0.0 (min (Config.board_w -. c.diam) c.x);
   c.y <- max 0.0 (min (Config.board_h -. c.diam) c.y);
-  (* Check if center landed inside hospital *)
   let (_, cy) : float * float = center c in
   let in_hospital : bool = cy >= (Config.board_h -. Config.hospital_h) in
   if in_hospital && c.state = Sick then
     heal_creet c;
-  Spatial.update_grid c;
   Creet.render_creet c
 
 (* ** wait_mouse_leave_window **
-   Resolves only when the mouse truly leaves the browser viewport, ignoring
-   the bubbled mouseout events fired when crossing internal element boundaries.
-   @param doc_el: root document element to watch
-   @res 1: promise resolving once the pointer has left the window
-   @edge cases: mouseout bubbles on every child transition, so relatedTarget
-     must be checked (null/undefined only when the pointer left the document)
-   @error conditions: none *)
+   Resolves only when the mouse truly leaves the browser viewport,
+   ignoring bubbled mouseout events from internal element boundaries. *)
 let rec wait_mouse_leave_window (doc_el : Dom_html.element Js.t) : unit Lwt.t =
   let%lwt ev = Lwt_js_events.mouseout doc_el in
   let left_window : bool =
@@ -81,15 +61,12 @@ let rec wait_mouse_leave_window (doc_el : Dom_html.element Js.t) : unit Lwt.t =
   if left_window then Lwt.return_unit else wait_mouse_leave_window doc_el
 
 (* ** attach_drag **
-   Attaches Lwt_js_events mouse listeners to a creature for drag and drop.
-   @param c: creature to attach drag listeners to
-   @res 1: unit confirming event binding
-   @edge cases: exclusively uses Lwt_js_events (no raw DOM listeners)
-   @error conditions: none *)
+   Binds mouse listeners so grabbable creets can be dragged; the drag
+   ends on mouseup or when the pointer leaves the window. *)
 let attach_drag (c : creet) : unit =
   Lwt.async (fun () ->
     Lwt_js_events.mousedowns c.el (fun ev _ ->
-      if Creet.is_grabbable c && not !Config.paused then begin
+      if Creet.is_grabbable c then begin
         Dom.preventDefault ev;
         c.dragging <- true;
         Creet.render_creet c;
@@ -102,11 +79,8 @@ let attach_drag (c : creet) : unit =
           Lwt.pick [
             Lwt_js_events.mousemoves doc (fun move_ev _ ->
               let (cur_mx, cur_my) : float * float = get_board_coords move_ev in
-              let target_x : float = cur_mx -. offset_x in
-              let target_y : float = cur_my -. offset_y in
-              c.x <- max 0.0 (min (Config.board_w -. c.diam) target_x);
-              c.y <- max 0.0 (min (Config.board_h -. c.diam) target_y);
-              Spatial.update_grid c;
+              c.x <- max 0.0 (min (Config.board_w -. c.diam) (cur_mx -. offset_x));
+              c.y <- max 0.0 (min (Config.board_h -. c.diam) (cur_my -. offset_y));
               Creet.render_creet c;
               Lwt.return_unit);
             (let%lwt _ = Lwt_js_events.mouseup doc in Lwt.return_unit);
